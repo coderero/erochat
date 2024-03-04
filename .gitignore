@@ -1,0 +1,15 @@
+# .gitigonre file is used to ignore files and directories from being tracked by git.
+
+# To ignore
+logs/*.log
+*.env
+*.env.local
+
+certs/*
+!certs/info.md
+
+
+
+.idea/
+.vscode/
+.DS_Store
