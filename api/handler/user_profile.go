@@ -237,6 +237,13 @@ func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 		}
 	}
 
+	if profile.FirstName == "" && profile.LastName == "" && profile.Avatar == "" {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "at least one field is required",
+		}
+	}
+
 	// Get the user by its email.
 	user, err := h.userStore.GetByEmail(email)
 	if err != nil {
