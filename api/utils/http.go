@@ -11,6 +11,7 @@ func SaveCookie(c echo.Context, key, value string) {
 	cookie := new(http.Cookie)
 	cookie.Name = key
 	cookie.Value = value
+	cookie.Path = "/"
 	cookie.Expires = time.Now().Add(24 * time.Hour)
 	c.SetCookie(cookie)
 }

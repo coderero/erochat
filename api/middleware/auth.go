@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/coderero/erochat-server/api/utils"
@@ -38,28 +37,17 @@ func JWTMiddleware(jwt interfaces.TokenService) echo.MiddlewareFunc {
 					return next(c)
 				}
 			} else {
-
 				// Cookie token
 				var (
 					accessToken  string
 					refreshToken string
 				)
 
-				accessCookie, aErr := c.Cookie("__a")
-				refreshCookie, rErr := c.Cookie("__r")
-				if rErr != nil && aErr != nil {
-					return echo.ErrUnauthorized
-				}
+				// Get the access token from the cookie.
+				accessToken = utils.GetCookie(c, "__a")
+				refreshToken = utils.GetCookie(c, "__r")
 
-				if accessCookie != nil {
-					accessToken = accessCookie.Value
-				}
-
-				if refreshCookie != nil {
-					refreshToken = refreshCookie.Value
-				}
-
-				if len(accessToken) == 0 && len(refreshToken) == 0 {
+				if accessToken == "" && refreshToken == "" {
 					return echo.ErrUnauthorized
 				}
 
@@ -95,7 +83,6 @@ func JWTMiddleware(jwt interfaces.TokenService) echo.MiddlewareFunc {
 					if err != nil {
 						return err
 					}
-					fmt.Println("User ", c.Get("user"))
 					return next(c)
 				}
 			}

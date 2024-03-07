@@ -59,9 +59,13 @@ func main() {
 		// Echo middleware.
 		recover = middleware.Recover()
 		logger  = middleware.Logger()
+		cors    = middleware.CORSWithConfig(middleware.CORSConfig{
+			AllowOrigins: []string{"*"},
+			AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+		})
 
 		// Echo Routes.
-		_         = app.Group("/api/v1")
+		apiV1     = app.Group("/api/v1")
 		apiAuthV1 = app.Group("/api/auth/v1")
 
 		// Service initialization.
@@ -71,24 +75,34 @@ func main() {
 		// Middleware initialization.
 		auth = apiMiddleware.JWTMiddleware(jwtTokenService)
 
+		// Store initialization.
+		user    = mysql.NewUserStore(db)
+		profile = mysql.NewProfileStore(db)
+
 		// Handler initialization.
-		authHandler = handler.NewAuthHandler(mysql.NewUserStore(db), passService, jwtTokenService)
+		authHandler    = handler.NewAuthHandler(user, passService, jwtTokenService)
+		profileHandler = handler.NewProfileHandler(profile, user)
 	)
 
 	// Use middleware.
 	app.Use(recover)
 	app.Use(logger)
+	app.Use(cors)
+	apiV1.Use(auth)
 
 	// Custom HTTP error handler.
 	app.HTTPErrorHandler = utils.CustomHTTPErrorHandler(app)
-
-	// Custom Middleware.
-	apiAuthV1.Use(auth)
 
 	// Routes.
 	apiAuthV1.POST("/login", authHandler.Login)
 	apiAuthV1.POST("/register", authHandler.Register)
 	apiAuthV1.POST("/logout", authHandler.Logout)
+
+	apiV1.GET("/user/profile", profileHandler.GetProfile)
+	apiV1.POST("/user/profile", profileHandler.CreateProfile)
+	apiV1.PUT("/user/profile", profileHandler.UpdateProfile)
+	apiV1.GET("/user/profile/:uid", profileHandler.GetProfileByID)
+	apiV1.DELETE("/user/profile", profileHandler.DeleteProfile)
 
 	if err := app.Start(":8080"); err != nil {
 		log.Fatal(err)

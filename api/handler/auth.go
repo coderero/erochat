@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 
@@ -97,6 +98,14 @@ func (h *AuthHandler) Login(c echo.Context) error {
 
 	// If the user is not found, return an error.
 	if err != nil {
+		if errors.Is(err, interfaces.ErrUserNotFound) {
+			return c.JSON(http.StatusNotFound, types.ApiResponse{
+				Status:  types.Failure.String(),
+				Code:    http.StatusNotFound,
+				Type:    types.ErrorTypeNotFound.String(),
+				Message: "user not found",
+			})
+		}
 		return c.JSON(http.StatusBadRequest, userStoreErrResBuilder(err))
 	}
 
