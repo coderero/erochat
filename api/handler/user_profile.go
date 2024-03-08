@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/coderero/erochat-server/api/utils"
@@ -153,6 +154,9 @@ func (h *ProfileHandler) GetProfile(c echo.Context) error {
 func (h *ProfileHandler) CreateProfile(c echo.Context) error {
 	profile := new(CreateProfile)
 	if err := utils.JSONDecode(c, profile); err != nil {
+		if strings.Contains(err.Error(), "json:") {
+			return c.JSON(http.StatusBadRequest, utils.JsonBindingErrorBuilder(err))
+		}
 		return err
 	}
 
@@ -226,6 +230,9 @@ func (h *ProfileHandler) CreateProfile(c echo.Context) error {
 func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 	profile := new(UpdateProfile)
 	if err := utils.JSONDecode(c, profile); err != nil {
+		if strings.Contains(err.Error(), "json:") {
+			return c.JSON(http.StatusBadRequest, utils.JsonBindingErrorBuilder(err))
+		}
 		return err
 	}
 
