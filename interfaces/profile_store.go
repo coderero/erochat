@@ -25,6 +25,9 @@ var (
 
 	// ErrProfileExists is returned when the profile exists.
 	ErrProfileExists = errors.New("profile exists")
+
+	// ErrFailedToCreateFriendship is returned when the friendship is not found.
+	ErrFailedToCreateFriendship = errors.New("failed to create friendship")
 )
 
 // ProfileStore is a data store for profile.
@@ -40,6 +43,9 @@ type ProfileStore interface {
 
 	// Create creates a new profile.
 	Create(profile *types.Profile) (*types.Profile, error)
+
+	// CreateFriendship creates a new friendship.
+	CreateFriendship(userID, friendID string) error
 
 	// Update updates a profile.
 	Update(profile *types.Profile) (*types.Profile, error)

@@ -10,7 +10,9 @@ const (
 
 	GetUserProfileByEmail = `SELECT p.id, p.uid, p.user_id, p.first_name, p.last_name, p.avatar, u.username, u.email, p.created_at, p.updated_at, p.deleted_at FROM profiles p JOIN users u ON p.user_id = u.id WHERE u.email = ?`
 
-	CreateUserProfile = `INSERT INTO profiles (uid, user_id, first_name, last_name, avatar) VALUES (UUID(), ?, ?, ?, ?)`
+	CreateUserProfile = `INSERT INTO profiles (uid, user_id, first_name, last_name, avatar) VALUES (?, ?, ?, ?, ?)`
+
+	CreateFriendship = `INSERT INTO friendships (uid, user_id, friend_id) VALUES (UUID(), ?, ?)`
 
 	UpdateUserProfile = `UPDATE profiles SET first_name = COALESCE(?, first_name), last_name = COALESCE(?, last_name), avatar = COALESCE(?, avatar), updated_at = now() WHERE user_id = ?`
 

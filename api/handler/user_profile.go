@@ -78,6 +78,106 @@ func NewProfileHandler(profileStore interfaces.ProfileStore, userStore interface
 	}
 }
 
+func (h *ProfileHandler) AddFriend(c echo.Context) error {
+	uid := c.Param("uid")
+	// Parse the uuid.
+	id, err := uuid.Parse(uid)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "invalid profile id",
+		}
+	}
+
+	email, ok := c.Get("user").(string)
+	if !ok {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "failed to get user email",
+		}
+	}
+
+	addFriend := make(chan echo.Map, 2)
+	go func(email string) {
+		user, err := h.userStore.GetByEmail(email)
+		if err != nil {
+			addFriend <- echo.Map{
+				"error": err,
+			}
+			return
+		}
+
+		addFriend <- echo.Map{
+			"user": user,
+		}
+	}(email)
+
+	go func(id uuid.UUID) {
+		friend, err := h.profileStore.GetByUID(id)
+		if err != nil {
+			addFriend <- echo.Map{
+				"error": err,
+			}
+			return
+		}
+
+		addFriend <- echo.Map{
+			"friend": friend,
+		}
+	}(id)
+
+	var (
+		user      *types.User
+		friend    *types.Profile
+		userErr   error
+		friendErr error
+	)
+
+	for i := 0; i < 2; i++ {
+		res := <-addFriend
+		if res["user"] != nil {
+			user = res["user"].(*types.User)
+		} else if res["friend"] != nil {
+			friend = res["friend"].(*types.Profile)
+		} else if res["error"] != nil {
+			if userErr == nil {
+				userErr = res["error"].(error)
+			} else {
+				friendErr = res["error"].(error)
+			}
+		}
+	}
+
+	if userErr != nil || friendErr != nil {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to get user or friend",
+		}
+	}
+
+	if user.ID == friend.UserID {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "cannot add yourself as a friend",
+		}
+	}
+
+	err = h.profileStore.CreateFriendship(user.UID.String(), friend.UID.String())
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to create friendship",
+		}
+	}
+
+	return c.JSON(http.StatusOK, types.ApiResponse{
+		Status:  types.Success.String(),
+		Code:    http.StatusOK,
+		Message: "friend request sent successfully",
+	})
+
+}
+
 // GetProfileByID returns a profile by its uuid.
 func (h *ProfileHandler) GetProfileByID(c echo.Context) error {
 	uid := c.Param("uid")
@@ -188,6 +288,7 @@ func (h *ProfileHandler) CreateProfile(c echo.Context) error {
 	}
 
 	profileData := &types.Profile{
+		UID:       user.UID,
 		FirstName: profile.FirstName,
 		LastName:  profile.LastName,
 		Avatar:    profile.Avatar,

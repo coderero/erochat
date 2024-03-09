@@ -90,7 +90,7 @@ func (s *ProfileStore) Create(profile *types.Profile) (*types.Profile, error) {
 
 	// Get the user by its email.
 
-	result, err := db.Exec(queries.CreateUserProfile, profile.UserID, profile.FirstName, profile.LastName, profile.Avatar)
+	result, err := db.Exec(queries.CreateUserProfile, profile.UID, profile.UserID, profile.FirstName, profile.LastName, profile.Avatar)
 	if err != nil {
 		// Check if the profile already exists.
 		if strings.Contains(err.Error(), "Duplicate entry") {
@@ -117,6 +117,20 @@ func (s *ProfileStore) Create(profile *types.Profile) (*types.Profile, error) {
 	}
 
 	return profile, nil
+}
+
+func (s *ProfileStore) CreateFriendship(userID, friendID string) error {
+	db, err := s.pool.Get()
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(queries.CreateFriendship, userID, friendID)
+	if err != nil {
+		return interfaces.ErrFailedToCreateFriendship
+	}
+
+	return nil
 }
 
 // Update updates a profile.

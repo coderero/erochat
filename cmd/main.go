@@ -102,6 +102,7 @@ func main() {
 	apiV1.POST("/user/profile", profileHandler.CreateProfile)
 	apiV1.PUT("/user/profile", profileHandler.UpdateProfile)
 	apiV1.GET("/user/profile/:uid", profileHandler.GetProfileByID)
+	apiV1.POST("/user/profile/:uid", profileHandler.AddFriend)
 	apiV1.DELETE("/user/profile", profileHandler.DeleteProfile)
 
 	if err := app.Start(":8080"); err != nil {
