@@ -8,6 +8,8 @@ logs/*.log
 certs/*
 !certs/info.md
 
+bin/*
+!bin/info.md
 
 
 .idea/
