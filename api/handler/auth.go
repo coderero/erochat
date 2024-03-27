@@ -126,7 +126,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 	}
 
 	// Generate a token and a refresh token.
-	token, refreshToken, err := h.tokenService.GenerateTokens(user.Email)
+	token, refreshToken, err := h.tokenService.GenerateTokens(user.Email, user.UID)
 
 	// If an error occurred, return it.
 	if err != nil {
@@ -239,7 +239,7 @@ func (h *AuthHandler) Register(c echo.Context) error {
 	}
 
 	// Generate a token and a refresh token.
-	token, refreshToken, err := h.tokenService.GenerateTokens(user.Email)
+	token, refreshToken, err := h.tokenService.GenerateTokens(user.Email, user.UID)
 
 	// If an error occurred, return it.
 	if err != nil {

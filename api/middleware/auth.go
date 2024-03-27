@@ -99,6 +99,7 @@ func GetAndSetToContext(c echo.Context, jwt interfaces.TokenService, token strin
 	}
 	// Set the user email in the context.
 	c.Set("user", claims["sub"])
+	c.Set("uid", claims["uid"])
 
 	return nil
 }

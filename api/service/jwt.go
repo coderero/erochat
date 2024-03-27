@@ -73,7 +73,7 @@ func NewJWTService(privateKey, publicKey []byte, tokenDuration, refreshTokenDura
 }
 
 // GenerateTokens generates a token and a refresh token.
-func (s *JWTService) GenerateTokens(email string) (string, string, error) {
+func (s *JWTService) GenerateTokens(email string, userId uuid.UUID) (string, string, error) {
 	var (
 		token        string
 		refreshToken string
@@ -81,13 +81,13 @@ func (s *JWTService) GenerateTokens(email string) (string, string, error) {
 	)
 
 	// Create a new token.
-	token, err = s.createToken(email, time.Now().Add(s.TokenDuration).Unix())
+	token, err = s.createToken(email, userId, time.Now().Add(s.TokenDuration).Unix())
 	if err != nil {
 		return "", "", err
 	}
 
 	// Create a new refresh token.
-	refreshToken, err = s.createToken(email, time.Now().Add(s.RefreshTokenDuration).Unix())
+	refreshToken, err = s.createToken(email, userId, time.Now().Add(s.RefreshTokenDuration).Unix())
 	if err != nil {
 		return "", "", err
 	}
@@ -142,9 +142,9 @@ func (s *JWTService) GetClaims(tokenString string) (jwt.MapClaims, error) {
 }
 
 // GenerateToken generates a token.
-func (s *JWTService) GenerateToken(email string, tokenType TokenType) (string, error) {
+func (s *JWTService) GenerateToken(email string, userId uuid.UUID, tokenType TokenType) (string, error) {
 	d := tokenType.Duration(s)
-	return s.createToken(email, time.Now().Add(d).Unix())
+	return s.createToken(email, userId, time.Now().Add(d).Unix())
 }
 
 func (s *JWTService) RefreshToken(refreshToken string) (string, error) {
@@ -165,12 +165,24 @@ func (s *JWTService) RefreshToken(refreshToken string) (string, error) {
 		return "", err
 	}
 
+	// Get the user id from the claims.
+	userId, ok := claims["uid"].(string)
+	if !ok {
+		return "", err
+	}
+
+	// Parse the user id.
+	uid, err := uuid.Parse(userId)
+	if err != nil {
+		return "", err
+	}
+
 	// Create a new token.
-	return s.createToken(email, time.Now().Add(s.TokenDuration).Unix())
+	return s.createToken(email, uid, time.Now().Add(s.TokenDuration).Unix())
 }
 
 // createToken creates a token.
-func (s *JWTService) createToken(email string, duration int64) (string, error) {
+func (s *JWTService) createToken(email string, userId uuid.UUID, duration int64) (string, error) {
 	var (
 		token  *jwt.Token
 		claims jwt.MapClaims
@@ -180,6 +192,7 @@ func (s *JWTService) createToken(email string, duration int64) (string, error) {
 	// Create a new token.
 	claims = jwt.MapClaims{
 		"iss": "erosecurity",
+		"uid": userId,
 		"sub": email,
 		"exp": time.Now().Add(time.Duration(duration) * time.Second).Unix(),
 		"iat": time.Now().Unix(),
