@@ -25,6 +25,7 @@ type Profile struct {
 	UserID    int          `json:"user_id" db:"user_id"`
 	FirstName string       `json:"first_name" db:"first_name"`
 	LastName  string       `json:"last_name" db:"last_name"`
+	Bio       string       `json:"bio" db:"bio"`
 	Avatar    string       `json:"avatar" db:"avatar"`
 	Username  string       `json:"username" db:"username"`
 	Email     string       `json:"email" db:"email"`

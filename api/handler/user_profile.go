@@ -35,6 +35,9 @@ type UserProfile struct {
 	// LastName is the last name of the profile.
 	LastName string `json:"last_name"`
 
+	// Bio is the bio of the profile.
+	Bio string `json:"bio"`
+
 	// Avatar is the avatar of the profile.
 	Avatar string `json:"avatar"`
 
@@ -55,6 +58,9 @@ type CreateProfile struct {
 	// LastName is the last name of the profile.
 	LastName string `json:"last_name" validate:"required"`
 
+	// Bio is the bio of the profile.
+	Bio string `json:"bio"`
+
 	// Avatar is the avatar of the profile.
 	Avatar string `json:"avatar" validate:"required"`
 }
@@ -65,6 +71,9 @@ type UpdateProfile struct {
 
 	// LastName is the last name of the profile.
 	LastName string `json:"last_name"`
+
+	// Bio is the bio of the profile.
+	Bio string `json:"bio"`
 
 	// Avatar is the avatar of the profile.
 	Avatar string `json:"avatar"`
@@ -203,6 +212,7 @@ func (h *ProfileHandler) GetProfileByID(c echo.Context) error {
 		UID:       profile.UID.String(),
 		FirstName: profile.FirstName,
 		LastName:  profile.LastName,
+		Bio:       profile.Bio,
 		Avatar:    profile.Avatar,
 		Username:  profile.Username,
 		Email:     profile.Email,
@@ -236,6 +246,7 @@ func (h *ProfileHandler) GetProfile(c echo.Context) error {
 		UID:       profile.UID.String(),
 		FirstName: profile.FirstName,
 		LastName:  profile.LastName,
+		Bio:       profile.Bio,
 		Avatar:    profile.Avatar,
 		Username:  profile.Username,
 		Email:     profile.Email,
@@ -291,6 +302,7 @@ func (h *ProfileHandler) CreateProfile(c echo.Context) error {
 		UID:       user.UID,
 		FirstName: profile.FirstName,
 		LastName:  profile.LastName,
+		Bio:       profile.Bio,
 		Avatar:    profile.Avatar,
 		UserID:    user.ID,
 	}
@@ -314,6 +326,7 @@ func (h *ProfileHandler) CreateProfile(c echo.Context) error {
 		FirstName: res.FirstName,
 		LastName:  res.LastName,
 		Avatar:    res.Avatar,
+		Bio:       res.Bio,
 		Username:  res.Username,
 		Email:     res.Email,
 		CreatedAt: res.CreatedAt,
@@ -364,6 +377,7 @@ func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 	profileData := &types.Profile{
 		FirstName: profile.FirstName,
 		LastName:  profile.LastName,
+		Bio:       profile.Bio,
 		Avatar:    profile.Avatar,
 		UserID:    user.ID,
 	}

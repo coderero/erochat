@@ -78,10 +78,12 @@ func main() {
 		// Store initialization.
 		user    = mysql.NewUserStore(db)
 		profile = mysql.NewProfileStore(db)
+		status  = mysql.NewStatusStore(db)
 
 		// Handler initialization.
 		authHandler    = handler.NewAuthHandler(user, passService, jwtTokenService)
 		profileHandler = handler.NewProfileHandler(profile, user)
+		statusHandler  = handler.NewUserStatusHandler(user, status)
 	)
 
 	// Use middleware.
@@ -94,16 +96,24 @@ func main() {
 	app.HTTPErrorHandler = utils.CustomHTTPErrorHandler(app)
 
 	// Routes.
+
+	/* Auth routes. */
 	apiAuthV1.POST("/login", authHandler.Login)
 	apiAuthV1.POST("/register", authHandler.Register)
 	apiAuthV1.POST("/logout", authHandler.Logout)
 
+	/* User routes. */
 	apiV1.GET("/user/profile", profileHandler.GetProfile)
 	apiV1.POST("/user/profile", profileHandler.CreateProfile)
 	apiV1.PUT("/user/profile", profileHandler.UpdateProfile)
 	apiV1.GET("/user/profile/:uid", profileHandler.GetProfileByID)
 	apiV1.POST("/user/profile/:uid", profileHandler.AddFriend)
 	apiV1.DELETE("/user/profile", profileHandler.DeleteProfile)
+
+	/* Status routes. */
+	apiV1.GET("/user/status", statusHandler.GetStatus)
+	apiV1.POST("/user/status", statusHandler.CreateStatus)
+	apiV1.DELETE("/user/status/:uid", statusHandler.DeleteStatus)
 
 	if err := app.Start(":8080"); err != nil {
 		log.Fatal(err)

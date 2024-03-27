@@ -32,7 +32,7 @@ func (s *ProfileStore) GetByUID(id uuid.UUID) (*types.Profile, error) {
 	}
 
 	profile := &types.Profile{}
-	err = db.QueryRow(queries.GetUserProfileByUID, id).Scan(&profile.ID, &profile.UID, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
+	err = db.QueryRow(queries.GetUserProfileByUID, id).Scan(&profile.ID, &profile.UID, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Bio, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
 	if err != nil {
 		// If the profile is not found, return an error.
 		if errors.Is(err, sql.ErrNoRows) {
@@ -51,7 +51,7 @@ func (s *ProfileStore) GetByUserID(id int) (*types.Profile, error) {
 	}
 
 	profile := &types.Profile{}
-	err = db.QueryRow(queries.GetUserProfileByUserID, id).Scan(&profile.ID, &profile.UID, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
+	err = db.QueryRow(queries.GetUserProfileByUserID, id).Scan(&profile.ID, &profile.UID, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Bio, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
 	if err != nil {
 		// If the profile is not found, return an error.
 		if errors.Is(err, sql.ErrNoRows) {
@@ -70,7 +70,7 @@ func (s *ProfileStore) GetByEmail(email string) (*types.Profile, error) {
 	}
 
 	profile := &types.Profile{}
-	err = db.QueryRow(queries.GetUserProfileByEmail, email).Scan(&profile.ID, &profile.UID, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
+	err = db.QueryRow(queries.GetUserProfileByEmail, email).Scan(&profile.ID, &profile.UID, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Bio, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
 	if err != nil {
 		// If the profile is not found, return an error.
 		if errors.Is(err, sql.ErrNoRows) {
@@ -90,7 +90,8 @@ func (s *ProfileStore) Create(profile *types.Profile) (*types.Profile, error) {
 
 	// Get the user by its email.
 
-	result, err := db.Exec(queries.CreateUserProfile, profile.UID, profile.UserID, profile.FirstName, profile.LastName, profile.Avatar)
+	result, err := db.Exec(queries.CreateUserProfile, profile.UID, profile.UserID, profile.FirstName, profile.LastName, profile.Bio, profile.Avatar)
+	// SetStatus sets the status of a user.
 	if err != nil {
 		// Check if the profile already exists.
 		if strings.Contains(err.Error(), "Duplicate entry") {
@@ -106,7 +107,7 @@ func (s *ProfileStore) Create(profile *types.Profile) (*types.Profile, error) {
 
 	var uid string
 	row := db.QueryRow(queries.GetUserProfileByID, id)
-	err = row.Scan(&profile.ID, &uid, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
+	err = row.Scan(&profile.ID, &uid, &profile.UserID, &profile.FirstName, &profile.LastName, &profile.Bio, &profile.Avatar, &profile.Username, &profile.Email, &profile.CreatedAt, &profile.UpdatedAt, &profile.DeletedAt)
 	if err != nil {
 		return nil, interfaces.ErrFailedToCreateProfile
 	}
@@ -141,7 +142,8 @@ func (s *ProfileStore) Update(profile *types.Profile) (*types.Profile, error) {
 		return nil, err
 	}
 
-	result, err := db.Exec(queries.UpdateUserProfile, profile.FirstName, profile.LastName, profile.Avatar, profile.UserID)
+	result, err := db.Exec(queries.UpdateUserProfile, profile.FirstName, profile.LastName, profile.Bio, profile.Avatar, profile.UserID)
+	// SetStatus sets the status of a user.
 	if err != nil {
 		return nil, interfaces.ErrFailedToUpdateProfile
 	}
