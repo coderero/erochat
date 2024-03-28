@@ -34,11 +34,11 @@ type CreateStatus struct {
 }
 
 // NewUserStatusHandler returns a new user status handler.
-func NewUserStatusHandler(userStore interfaces.UserStore, statusStore interfaces.StatusStore) *UserStatusHandler {
+func NewUserStatusHandler(validator *validator.Validate, userStore interfaces.UserStore, statusStore interfaces.StatusStore) *UserStatusHandler {
 	return &UserStatusHandler{
 		userStore:   userStore,
 		statusStore: statusStore,
-		validate:    validator.New(),
+		validate:    validator,
 	}
 }
 

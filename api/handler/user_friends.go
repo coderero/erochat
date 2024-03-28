@@ -17,10 +17,10 @@ type UserFirendShipHandler struct {
 }
 
 // NewUserFriendShipHandler returns a new user friend ship handler.
-func NewUserFriendShipHandler(userStore interfaces.UserStore, friendStore interfaces.FriendStore) *UserFirendShipHandler {
+func NewUserFriendShipHandler(validator *validator.Validate, userStore interfaces.UserStore, friendStore interfaces.FriendStore) *UserFirendShipHandler {
 	return &UserFirendShipHandler{
 		userStore:   userStore,
 		friendStore: friendStore,
-		validate:    validator.New(),
+		validate:    validator,
 	}
 }

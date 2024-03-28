@@ -79,9 +79,9 @@ type UpdateProfile struct {
 	Avatar string `json:"avatar"`
 }
 
-func NewProfileHandler(profileStore interfaces.ProfileStore, userStore interfaces.UserStore) *ProfileHandler {
+func NewProfileHandler(validator *validator.Validate, profileStore interfaces.ProfileStore, userStore interfaces.UserStore) *ProfileHandler {
 	return &ProfileHandler{
-		validate:     validator.New(),
+		validate:     validator,
 		profileStore: profileStore,
 		userStore:    userStore,
 	}

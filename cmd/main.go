@@ -9,6 +9,7 @@ import (
 	"github.com/coderero/erochat-server/api/service"
 	"github.com/coderero/erochat-server/api/utils"
 	"github.com/coderero/erochat-server/db/mysql"
+	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -80,10 +81,13 @@ func main() {
 		profile = mysql.NewProfileStore(db)
 		status  = mysql.NewStatusStore(db)
 
+		// Validator initialization.
+		validator = validator.New()
+
 		// Handler initialization.
-		authHandler    = handler.NewAuthHandler(user, passService, jwtTokenService)
-		profileHandler = handler.NewProfileHandler(profile, user)
-		statusHandler  = handler.NewUserStatusHandler(user, status)
+		authHandler    = handler.NewAuthHandler(validator, user, passService, jwtTokenService)
+		profileHandler = handler.NewProfileHandler(validator, profile, user)
+		statusHandler  = handler.NewUserStatusHandler(validator, user, status)
 	)
 
 	// Use middleware.

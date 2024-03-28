@@ -47,9 +47,9 @@ type RefreshToken struct {
 }
 
 // NewAuthHandler creates a new AuthHandler.
-func NewAuthHandler(userStore interfaces.UserStore, passwordHasher interfaces.PassService, tokenService interfaces.TokenService) *AuthHandler {
+func NewAuthHandler(validator *validator.Validate, userStore interfaces.UserStore, passwordHasher interfaces.PassService, tokenService interfaces.TokenService) *AuthHandler {
 	return &AuthHandler{
-		validator:      validator.New(),
+		validator:      validator,
 		userStore:      userStore,
 		passwordHasher: passwordHasher,
 		tokenService:   tokenService,
