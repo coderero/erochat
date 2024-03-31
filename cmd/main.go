@@ -80,24 +80,33 @@ func main() {
 		user    = mysql.NewUserStore(db)
 		profile = mysql.NewProfileStore(db)
 		status  = mysql.NewStatusStore(db)
+		friend  = mysql.NewFriendStore(db)
 
 		// Validator initialization.
 		validator = validator.New()
 
 		// Handler initialization.
-		authHandler    = handler.NewAuthHandler(validator, user, passService, jwtTokenService)
-		profileHandler = handler.NewProfileHandler(validator, profile, user)
-		statusHandler  = handler.NewUserStatusHandler(validator, user, status)
+		authHandler       = handler.NewAuthHandler(validator, user, passService, jwtTokenService)
+		profileHandler    = handler.NewProfileHandler(validator, profile, user)
+		statusHandler     = handler.NewUserStatusHandler(validator, user, status)
+		friendshipHandler = handler.NewUserFriendShipHandler(validator, user, friend)
 	)
 
 	// Use middleware.
+
+	/* Main App */
 	app.Use(recover)
 	app.Use(logger)
 	app.Use(cors)
+
+	/* API V1 */
 	apiV1.Use(auth)
 
-	// Custom HTTP error handler.
+	// Echo configration
 	app.HTTPErrorHandler = utils.CustomHTTPErrorHandler(app)
+
+	// Validator configuration.
+	validator.RegisterTagNameFunc(utils.ValidatorTagFunc)
 
 	// Routes.
 
@@ -113,11 +122,25 @@ func main() {
 	apiV1.GET("/user/profile/:uid", profileHandler.GetProfileByID)
 	apiV1.POST("/user/profile/:uid", profileHandler.AddFriend)
 	apiV1.DELETE("/user/profile", profileHandler.DeleteProfile)
+	apiV1.PATCH("/user/profile/reactivate", profileHandler.ReactivateProfile)
 
 	/* Status routes. */
 	apiV1.GET("/user/status", statusHandler.GetStatus)
 	apiV1.POST("/user/status", statusHandler.CreateStatus)
 	apiV1.DELETE("/user/status/:uid", statusHandler.DeleteStatus)
+
+	/* Friend routes. */
+	apiV1.GET("/user/friends/details", friendshipHandler.GetFriends)
+	apiV1.GET("/user/friends/details/:uid", friendshipHandler.GetFriend)
+	apiV1.DELETE("/user/friends/details/:uid", friendshipHandler.DeleteFriend)
+	apiV1.GET("/user/friends/requests", friendshipHandler.GetFriendRequests)
+	apiV1.GET("/user/friends/requests/:uid", friendshipHandler.GetFriendRequest)
+	apiV1.PATCH("/user/friends/requests/:uid", friendshipHandler.AcceptFriendRequest)
+	apiV1.DELETE("/user/friends/requests/:uid", friendshipHandler.DeleteFriendRequest)
+	apiV1.GET("/user/friends/status", friendshipHandler.GetFriendsStatus)
+	apiV1.GET("/user/friends/status/:uid", friendshipHandler.GetFriendStatus)
+
+	/* Start the HTTP server. */
 
 	if err := app.Start(":8080"); err != nil {
 		log.Fatal(err)

@@ -28,6 +28,12 @@ var (
 
 	// ErrFailedToCreateFriendship is returned when the friendship is not found.
 	ErrFailedToCreateFriendship = errors.New("failed to create friendship")
+
+	// ErrDuplicateFriendship is returned when the friendship is not found.
+	ErrDuplicateFriendship = errors.New("duplicate friendship")
+
+	// ErrSelfFriendship is returned when the friendship is not found.
+	ErrSelfFriendship = errors.New("self friendship")
 )
 
 // ProfileStore is a data store for profile.
@@ -51,5 +57,8 @@ type ProfileStore interface {
 	Update(profile *types.Profile) (*types.Profile, error)
 
 	// Delete deletes a profile by its uuid.
-	Delete(id int) (int, error)
+	Delete(id int) error
+
+	// Reactivate reactivates a profile by its uuid.
+	Reactivate(id int) error
 }

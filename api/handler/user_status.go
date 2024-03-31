@@ -24,10 +24,10 @@ type UserStatusHandler struct {
 
 type CreateStatus struct {
 	// Resource URL.
-	URL string `json:"url" validate:"required"`
+	ResourceURL string `json:"resource_url" validate:"required"`
 
 	// Resource Thumbnail.
-	Thumbnail string `json:"thumbnail" validate:"required"`
+	ResourceThumbnail string `json:"resource_thumbnail" validate:"required"`
 
 	// Resource Title.
 	Title string `json:"title" validate:"required"`
@@ -43,23 +43,22 @@ func NewUserStatusHandler(validator *validator.Validate, userStore interfaces.Us
 }
 
 func (u *UserStatusHandler) GetStatus(c echo.Context) error {
-	email, ok := c.Get("user").(string)
+	r_uid, ok := c.Get("uid").(string)
 	if !ok {
 		return &echo.HTTPError{
 			Code:    echo.ErrBadRequest.Code,
-			Message: "failed to get user email",
+			Message: "something went wrong",
 		}
 	}
 
-	user, err := u.userStore.GetByEmail(email)
+	uid, err := uuid.Parse(r_uid)
 	if err != nil {
 		return &echo.HTTPError{
 			Code:    echo.ErrBadRequest.Code,
-			Message: "failed to get user",
+			Message: "something went wrong",
 		}
 	}
-
-	status, err := u.statusStore.GetStatus(user.ID)
+	status, err := u.statusStore.GetStatus(uid)
 	if err != nil {
 		return &echo.HTTPError{
 			Code:    echo.ErrBadRequest.Code,
@@ -76,11 +75,19 @@ func (u *UserStatusHandler) GetStatus(c echo.Context) error {
 }
 
 func (u *UserStatusHandler) CreateStatus(c echo.Context) error {
-	email, ok := c.Get("user").(string)
+	r_uid, ok := c.Get("uid").(string)
 	if !ok {
 		return &echo.HTTPError{
 			Code:    echo.ErrBadRequest.Code,
-			Message: "failed to get user email",
+			Message: "something went wrong",
+		}
+	}
+
+	uid, err := uuid.Parse(r_uid)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "something went wrong",
 		}
 	}
 
@@ -99,18 +106,10 @@ func (u *UserStatusHandler) CreateStatus(c echo.Context) error {
 		})
 	}
 
-	user, err := u.userStore.GetByEmail(email)
-	if err != nil {
-		return &echo.HTTPError{
-			Code:    echo.ErrBadRequest.Code,
-			Message: "failed to get user",
-		}
-	}
-
 	newStatus := &types.UserStatus{
-		UserID:            user.ID,
-		ResourceURI:       status.URL,
-		ResourceThumbnail: status.Thumbnail,
+		UserID:            uid,
+		ResourceURI:       status.ResourceURL,
+		ResourceThumbnail: status.ResourceThumbnail,
 		Title:             status.Title,
 	}
 
@@ -147,23 +146,23 @@ func (u *UserStatusHandler) DeleteStatus(c echo.Context) error {
 		}
 	}
 
-	email, ok := c.Get("user").(string)
+	r_uid, ok := c.Get("uid").(string)
 	if !ok {
 		return &echo.HTTPError{
 			Code:    echo.ErrBadRequest.Code,
-			Message: "failed to get user email",
+			Message: "something went wrong",
 		}
 	}
 
-	user, err := u.userStore.GetByEmail(email)
+	user_uid, err := uuid.Parse(r_uid)
 	if err != nil {
 		return &echo.HTTPError{
 			Code:    echo.ErrBadRequest.Code,
-			Message: "failed to get user",
+			Message: "something went wrong",
 		}
 	}
 
-	err = u.statusStore.DeleteStatus(user.ID, uid)
+	err = u.statusStore.DeleteStatus(user_uid, uid)
 	if err != nil {
 		if err.Error() == "status not found" {
 			return &echo.HTTPError{

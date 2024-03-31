@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strings"
 	"time"
@@ -98,6 +99,26 @@ func (h *ProfileHandler) AddFriend(c echo.Context) error {
 		}
 	}
 
+	rUserUID, ok := c.Get("uid").(string)
+	if !ok {
+		return sww
+	}
+
+	userUID, err := uuid.Parse(rUserUID)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "invalid user id",
+		}
+	}
+
+	if userUID == id {
+		return &echo.HTTPError{
+			Code:    http.StatusBadRequest,
+			Message: "cannot add yourself as a friend",
+		}
+	}
+
 	email, ok := c.Get("user").(string)
 	if !ok {
 		return &echo.HTTPError{
@@ -160,7 +181,7 @@ func (h *ProfileHandler) AddFriend(c echo.Context) error {
 	if userErr != nil || friendErr != nil {
 		return &echo.HTTPError{
 			Code:    http.StatusBadRequest,
-			Message: "failed to get user or friend",
+			Message: "failed to get user profile",
 		}
 	}
 
@@ -173,10 +194,27 @@ func (h *ProfileHandler) AddFriend(c echo.Context) error {
 
 	err = h.profileStore.CreateFriendship(user.UID.String(), friend.UID.String())
 	if err != nil {
-		return &echo.HTTPError{
-			Code:    http.StatusBadRequest,
-			Message: "failed to create friendship",
+		if errors.Is(err, interfaces.ErrDuplicateFriendship) {
+			return &echo.HTTPError{
+				Code:    http.StatusConflict,
+				Message: "friendship already exists or request already sent",
+			}
 		}
+
+		if errors.Is(err, interfaces.ErrSelfFriendship) {
+			return &echo.HTTPError{
+				Code:    http.StatusBadRequest,
+				Message: "cannot add yourself as a friend",
+			}
+		}
+
+		if errors.Is(err, interfaces.ErrFriendNotFound) {
+			return &echo.HTTPError{
+				Code:    http.StatusNotFound,
+				Message: "friend not found",
+			}
+		}
+		return sww
 	}
 
 	return c.JSON(http.StatusOK, types.ApiResponse{
@@ -202,10 +240,13 @@ func (h *ProfileHandler) GetProfileByID(c echo.Context) error {
 
 	profile, err := h.profileStore.GetByUID(id)
 	if err != nil {
-		return &echo.HTTPError{
-			Code:    http.StatusNotFound,
-			Message: "profile not found",
+		if errors.Is(err, interfaces.ErrProfileNotFound) {
+			return &echo.HTTPError{
+				Code:    http.StatusNotFound,
+				Message: "profile not found",
+			}
 		}
+		return sww
 	}
 
 	profileResponse := UserProfile{
@@ -227,7 +268,7 @@ func (h *ProfileHandler) GetProfileByID(c echo.Context) error {
 	})
 }
 
-// GetProfileByID returns a profile by its uuid.
+// GetProfile gets the profile of the authenticated user.x
 func (h *ProfileHandler) GetProfile(c echo.Context) error {
 	email, ok := c.Get("user").(string)
 	if !ok {
@@ -239,7 +280,10 @@ func (h *ProfileHandler) GetProfile(c echo.Context) error {
 
 	profile, err := h.profileStore.GetByEmail(email)
 	if err != nil {
-		return err
+		return &echo.HTTPError{
+			Code:    http.StatusNotFound,
+			Message: "profile not found",
+		}
 	}
 
 	profileResponse := UserProfile{
@@ -385,8 +429,8 @@ func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 	res, err := h.profileStore.Update(profileData)
 	if err != nil {
 		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
+			Code:    echo.ErrBadRequest.Code,
+			Message: "failed to update profile",
 		}
 	}
 
@@ -396,6 +440,7 @@ func (h *ProfileHandler) UpdateProfile(c echo.Context) error {
 		LastName:  res.LastName,
 		Avatar:    res.Avatar,
 		Username:  res.Username,
+		Bio:       res.Bio,
 		Email:     res.Email,
 		CreatedAt: res.CreatedAt,
 	}
@@ -427,11 +472,11 @@ func (h *ProfileHandler) DeleteProfile(c echo.Context) error {
 		}
 	}
 
-	_, err = h.profileStore.Delete(user.ID)
+	err = h.profileStore.Delete(user.ID)
 	if err != nil {
 		return &echo.HTTPError{
-			Code:    http.StatusInternalServerError,
-			Message: err.Error(),
+			Code:    echo.ErrBadRequest.Code,
+			Message: "failed to delete profile",
 		}
 	}
 
@@ -439,5 +484,39 @@ func (h *ProfileHandler) DeleteProfile(c echo.Context) error {
 		Status:  types.Success.String(),
 		Code:    http.StatusOK,
 		Message: "profile deleted successfully",
+	})
+}
+
+// ReactivateProfile reactivates a profile by its uuid.
+func (h *ProfileHandler) ReactivateProfile(c echo.Context) error {
+	email, ok := c.Get("user").(string)
+	if !ok {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "failed to get user email",
+		}
+	}
+
+	// Get the user by its email.
+	user, err := h.userStore.GetByEmail(email)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    echo.ErrUnauthorized.Code,
+			Message: "unauthorized",
+		}
+	}
+
+	err = h.profileStore.Reactivate(user.ID)
+	if err != nil {
+		return &echo.HTTPError{
+			Code:    echo.ErrBadRequest.Code,
+			Message: "failed to reactivate profile",
+		}
+	}
+
+	return c.JSON(http.StatusOK, types.ApiResponse{
+		Status:  types.Success.String(),
+		Code:    http.StatusOK,
+		Message: "profile reactivated successfully",
 	})
 }

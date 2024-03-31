@@ -22,30 +22,47 @@ func NewStatusStore(pool *ConnectionPool) *StatusStore {
 }
 
 // GetStatus gets the status of a user.
-func (s *StatusStore) GetStatus(id int) ([]*types.UserStatus, error) {
+func (s *StatusStore) GetStatus(id uuid.UUID) ([]*types.UserStatus, error) {
+	var statuses []*types.UserStatus
+	statuses = []*types.UserStatus{}
 	db, err := s.pool.Get()
 	if err != nil {
-		return nil, err
+		return statuses, err
 	}
+	defer s.pool.Release()
 
 	rows, err := db.Query(queries.GetUsersStatus, id)
 	if err != nil {
-		return nil, err
+		return statuses, err
 	}
 	defer rows.Close()
 
-	var statuses []*types.UserStatus
 	for rows.Next() {
 		status := &types.UserStatus{}
 		err = rows.Scan(&status.ID, &status.UID, &status.UserID, &status.Title, &status.ResourceURI, &status.ResourceThumbnail, &status.CreatedAt)
 		if err != nil {
-			fmt.Println(err)
-			return nil, err
+			return statuses, err
 		}
 		statuses = append(statuses, status)
 	}
 
 	return statuses, nil
+}
+
+func (s *StatusStore) GetStatusByUID(userUID, uid uuid.UUID) (*types.UserStatus, error) {
+	db, err := s.pool.Get()
+	if err != nil {
+		return nil, err
+	}
+	defer s.pool.Release()
+
+	status := &types.UserStatus{}
+	err = db.QueryRow(queries.GetStatusByID, userUID, uid).Scan(&status.ID, &status.UID, &status.UserID, &status.Title, &status.ResourceURI, &status.ResourceThumbnail, &status.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+
+	return status, nil
 }
 
 // CreateStatus creates a new status.
@@ -54,6 +71,7 @@ func (s *StatusStore) CreateStatus(status *types.UserStatus) (*types.UserStatus,
 	if err != nil {
 		return nil, err
 	}
+	defer s.pool.Release()
 
 	st, err := db.Exec(queries.CreateStatus, status.UserID, status.Title, status.ResourceURI, status.ResourceThumbnail)
 	if err != nil {
@@ -67,7 +85,6 @@ func (s *StatusStore) CreateStatus(status *types.UserStatus) (*types.UserStatus,
 
 	err = db.QueryRow(queries.GetStatusByID, id).Scan(&status.ID, &status.UID, &status.UserID, &status.Title, &status.ResourceURI, &status.ResourceThumbnail, &status.CreatedAt)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	return status, nil
@@ -75,15 +92,15 @@ func (s *StatusStore) CreateStatus(status *types.UserStatus) (*types.UserStatus,
 }
 
 // DeleteStatus deletes a status by its id.
-func (s *StatusStore) DeleteStatus(userID int, id uuid.UUID) error {
+func (s *StatusStore) DeleteStatus(userID uuid.UUID, uid uuid.UUID) error {
 	db, err := s.pool.Get()
 	if err != nil {
 		return err
 	}
+	defer s.pool.Release()
 
-	a, err := db.Exec(queries.DeleteStatus, id, userID)
+	a, err := db.Exec(queries.DeleteStatus, userID, uid)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 

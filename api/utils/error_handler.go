@@ -49,7 +49,6 @@ func CustomHTTPErrorHandler(e *echo.Echo) echo.HTTPErrorHandler {
 				errRes.Message = strings.ToLower(m)
 			}
 		case json.Marshaler:
-			// do nothing - this type knows how to format itself to JSON
 		case error:
 			errRes.Code = code
 			errRes.Message = "internal server error"
@@ -57,7 +56,7 @@ func CustomHTTPErrorHandler(e *echo.Echo) echo.HTTPErrorHandler {
 		}
 
 		// Send response
-		if c.Request().Method == http.MethodHead { // Issue #608
+		if c.Request().Method == http.MethodHead {
 			err = c.NoContent(he.Code)
 		} else {
 			err = c.JSON(he.Code, errRes)

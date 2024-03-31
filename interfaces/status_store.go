@@ -7,11 +7,14 @@ import (
 
 type StatusStore interface {
 	// GetStatus gets the status of a user.
-	GetStatus(id int) ([]*types.UserStatus, error)
+	GetStatus(uid uuid.UUID) ([]*types.UserStatus, error)
+
+	// GetStatusByUID gets a status by its id.
+	GetStatusByUID(userUID, uid uuid.UUID) (*types.UserStatus, error)
 
 	// CreateStatus creates a new status.
 	CreateStatus(status *types.UserStatus) (*types.UserStatus, error)
 
 	// DeleteStatus deletes a status by its id.
-	DeleteStatus(userID int, id uuid.UUID) error
+	DeleteStatus(userID uuid.UUID, uid uuid.UUID) error
 }

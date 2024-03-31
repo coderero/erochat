@@ -65,7 +65,7 @@ func (p *ConnectionPool) Get() (*sql.DB, error) {
 	return nil, ErrMaxConnections
 }
 
-func (p *ConnectionPool) Release(conn *sql.DB) {
+func (p *ConnectionPool) Release() {
 	// Lock the pool.
 	p.mu.Lock()
 	defer p.mu.Unlock()

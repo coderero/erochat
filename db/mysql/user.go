@@ -38,6 +38,7 @@ func (s *UserStore) GetByID(id uuid.UUID) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer s.pool.Release()
 
 	user := &types.User{}
 	err = db.QueryRow(queries.GetUserByID, id).Scan(&user.ID, &user.Username, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
@@ -57,6 +58,7 @@ func (s *UserStore) GetByEmail(email string) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer s.pool.Release()
 
 	user := &types.User{}
 	err = db.QueryRow(queries.GetUserByEmail, email).Scan(&user.ID, &user.UID, &user.Username, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
@@ -76,6 +78,7 @@ func (s *UserStore) GetByUsername(username string) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer s.pool.Release()
 
 	user := &types.User{}
 	err = db.QueryRow(queries.GetUserByUsername, username).Scan(&user.ID, &user.UID, &user.Username, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt, &user.DeletedAt)
@@ -95,6 +98,7 @@ func (s *UserStore) Create(user *types.User) (*types.User, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer s.pool.Release()
 
 	result, err := db.Exec(queries.CreateUser, user.Username, user.Email, user.Password)
 	if err != nil {
@@ -124,6 +128,7 @@ func (s *UserStore) Update(id uuid.UUID, user *types.User) (*types.User, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer s.pool.Release()
 
 	// Update a user.
 	row := db.QueryRow(queries.UpdateUser, user.Username, user.Email, user.Password, user.UpdatedAt, id, id)
@@ -144,6 +149,7 @@ func (s *UserStore) Delete(id uuid.UUID) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, err
 	}
+	defer s.pool.Release()
 
 	// Delete a user.
 	row := db.QueryRow(queries.DeleteUser, id, id)

@@ -5,7 +5,7 @@ GREEN = \033[0;32m
 NC = \033[0m
 
 keys:
-	@bash ./scripts/generate_keys.sh
+	@bash ./scripts/rsa/generate_keys.sh
 
 build:
 	@echo "$(GREEN)Building $(app) $(version)$(NC)"

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"net/mail"
+	"reflect"
 	"strings"
 
 	"github.com/coderero/erochat-server/types"
@@ -19,6 +20,17 @@ func ConvertValidationErrors(err error) []types.Error {
 	}
 	return errors
 
+}
+
+// Code Reference:
+// https://github.com/go-playground/validator/issues/258#issuecomment-257281334
+func ValidatorTagFunc(fld reflect.StructField) string {
+	field := strings.SplitN(fld.Tag.Get("json"), ",", 2)[0]
+	if field == "-" {
+		return ""
+	}
+
+	return field
 }
 
 func msgForTag(tag string) string {
