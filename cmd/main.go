@@ -2,28 +2,48 @@ package main
 
 import (
 	"log"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/coderero/erochat-server/api/handler"
 	apiMiddleware "github.com/coderero/erochat-server/api/middleware"
 	"github.com/coderero/erochat-server/api/service"
 	"github.com/coderero/erochat-server/api/utils"
+	"github.com/coderero/erochat-server/db/cassd"
 	"github.com/coderero/erochat-server/db/mysql"
 	"github.com/go-playground/validator/v10"
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
+func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err)
+	}
+}
+
 func main() {
+	/* My SQL Connection Pool */
+
 	// Configuration variables.
-	const (
+	var (
 		// MySQL DSN.
-		dsn            = "root:secretpassword@tcp(localhost:3306)/erochat?parseTime=true"
-		maxConnections = 10
+		dsn = os.Getenv("MYSQL_DSN")
+
+		// Maximum number of connections in the pool.
+		maxConnections = os.Getenv("MYSQL_MAX_CONNECTIONS")
 	)
 
+	// Parse the maximum number of connections.
+	maxConnectionsInt, err := strconv.Atoi(maxConnections)
+	if err != nil {
+		panic(err)
+	}
+
 	// Create a new connection pool.
-	db, err := mysql.NewConnectionPool(dsn, maxConnections)
+	db, err := mysql.NewConnectionPool(dsn, maxConnectionsInt)
 	if err != nil {
 		panic(err)
 	}
@@ -34,6 +54,26 @@ func main() {
 		panic(err)
 	}
 	defer obj.Close()
+
+	/* Cassandra Session */
+
+	// Configuration variables.
+	var (
+		// Cassandra Host.
+		cassandraHost = os.Getenv("CASSANDRA_HOST")
+
+		// Cassandra Username.
+		cassandraUsername = os.Getenv("CASSANDRA_USERNAME")
+
+		// Cassandra Password.
+		cassandraPassword = os.Getenv("CASSANDRA_PASSWORD")
+	)
+
+	// Create a new Cassandra session.
+	_, err = cassd.NewSession(cassandraHost, cassandraUsername, cassandraPassword, "erochat")
+	if err != nil {
+		panic(err)
+	}
 
 	// Get RSA keys for JWT from the certificate files.
 	privKey, err := utils.GetFile("certs/app.rsa.key")
